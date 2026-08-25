@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FORM_SERVICES, SAMPLE_ID_PRESETS } from '../data/forms';
+import { FORM_SERVICES, SAMPLE_ID_PRESETS, utf8ToBase64 } from '../data/forms';
 import {
   FormType,
   DocumentUpload,
@@ -16,7 +16,7 @@ import { Navbar } from './Navbar';
 import { ApplicationsManagerModal } from './ApplicationsManagerModal';
 import { AstroArchitectureDrawer } from './AstroArchitectureDrawer';
 import { SubmissionSuccessModal } from './SubmissionSuccessModal';
-import { Sparkles, ArrowRight, ShieldAlert, Cpu, Database } from 'lucide-react';
+import { Sparkles, ArrowRight, ShieldAlert, Cpu, Database, AlertCircle, X } from 'lucide-react';
 
 export const GovFormIsland: React.FC = () => {
   const [selectedFormId, setSelectedFormId] = useState<FormType>('passport_renewal');
@@ -24,6 +24,7 @@ export const GovFormIsland: React.FC = () => {
   const [documents, setDocuments] = useState<DocumentUpload[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [apiResponse, setApiResponse] = useState<ParseFormApiResponse | null>(null);
   const [formData, setFormData] = useState<Record<string, ExtractedField<any>>>({});
@@ -41,19 +42,25 @@ export const GovFormIsland: React.FC = () => {
 
   // Initialize initial preset sample document on mount
   useEffect(() => {
-    const defaultPreset = SAMPLE_ID_PRESETS[0];
-    const initialDoc: DocumentUpload = {
-      id: `doc_${defaultPreset.id}`,
-      name: defaultPreset.fileName,
-      type: 'image/svg+xml',
-      size: 4096,
-      dataUrl: defaultPreset.svgDataUrl,
-      base64Data: btoa(decodeURIComponent(defaultPreset.svgDataUrl.split(',')[1])),
-      mimeType: 'image/svg+xml',
-    };
-    setDocuments([initialDoc]);
-    setUserPrompt(activeService.samplePrompt);
-    fetchD1Count();
+    try {
+      const defaultPreset = SAMPLE_ID_PRESETS[0];
+      const initialDoc: DocumentUpload = {
+        id: `doc_${defaultPreset.id}`,
+        name: defaultPreset.fileName,
+        type: 'image/svg+xml',
+        size: 4096,
+        dataUrl: defaultPreset.svgDataUrl,
+        base64Data:
+          defaultPreset.base64Data ||
+          utf8ToBase64(decodeURIComponent(defaultPreset.svgDataUrl.split(',')[1] || '')),
+        mimeType: 'image/svg+xml',
+      };
+      setDocuments([initialDoc]);
+      setUserPrompt(activeService.samplePrompt);
+      fetchD1Count();
+    } catch (err) {
+      console.warn('[GovForm AI] Init warning:', err);
+    }
   }, []);
 
   const fetchD1Count = async () => {
@@ -66,6 +73,7 @@ export const GovFormIsland: React.FC = () => {
 
   const handleSelectForm = (formId: FormType) => {
     setSelectedFormId(formId);
+    setErrorMessage(null);
     const newService = FORM_SERVICES.find((s) => s.id === formId);
     if (newService) {
       setUserPrompt(newService.samplePrompt);
@@ -83,6 +91,7 @@ export const GovFormIsland: React.FC = () => {
   // Trigger Gemini Multimodal Extraction
   const handleExecuteExtraction = async () => {
     setIsProcessing(true);
+    setErrorMessage(null);
     try {
       // Build payload
       const payload = {
@@ -113,11 +122,11 @@ export const GovFormIsland: React.FC = () => {
         setActiveStep('review');
         fetchD1Count();
       } else {
-        alert('Extraction error: ' + ((data as any).error || 'Unknown issue'));
+        setErrorMessage('Extraction issue: ' + ((data as any).error || 'Unknown issue occurred while parsing.'));
       }
     } catch (err: any) {
       console.error(err);
-      alert('Error querying Gemini API: ' + err.message);
+      setErrorMessage('Error querying Gemini extraction API: ' + (err.message || 'Network error'));
     } finally {
       setIsProcessing(false);
     }
@@ -265,6 +274,22 @@ export const GovFormIsland: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Error Notification Banner if any */}
+        {errorMessage && (
+          <div className="flex items-center justify-between rounded-xl border border-rose-500/40 bg-rose-950/40 p-4 text-xs text-rose-200">
+            <div className="flex items-center gap-2.5">
+              <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+              <span>{errorMessage}</span>
+            </div>
+            <button
+              onClick={() => setErrorMessage(null)}
+              className="rounded p-1 text-rose-400 hover:bg-rose-900/50 hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
 
         {/* View Routing Based on activeStep */}
         {activeStep === 'intake' && (

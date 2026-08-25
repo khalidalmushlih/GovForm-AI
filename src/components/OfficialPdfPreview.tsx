@@ -64,7 +64,11 @@ export const OfficialPdfPreview: React.FC<OfficialPdfPreviewProps> = ({
   };
 
   const handlePrint = () => {
-    window.print();
+    try {
+      window.print();
+    } catch (err) {
+      console.warn('Print not supported in iframe environment:', err);
+    }
   };
 
   return (

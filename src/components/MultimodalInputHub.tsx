@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { FormServiceMeta, DocumentUpload } from '../types';
-import { SAMPLE_ID_PRESETS, SampleIdPreset } from '../data/forms';
+import { SAMPLE_ID_PRESETS, SampleIdPreset, utf8ToBase64 } from '../data/forms';
 import {
   Mic,
   MicOff,
@@ -141,7 +141,9 @@ export const MultimodalInputHub: React.FC<MultimodalInputHubProps> = ({
       type: 'image/svg+xml',
       size: 4096,
       dataUrl: preset.svgDataUrl,
-      base64Data: btoa(decodeURIComponent(preset.svgDataUrl.split(',')[1])),
+      base64Data:
+        preset.base64Data ||
+        utf8ToBase64(decodeURIComponent(preset.svgDataUrl.split(',')[1] || '')),
       mimeType: 'image/svg+xml',
     };
     // Replace or add

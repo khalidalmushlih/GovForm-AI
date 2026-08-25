@@ -63,6 +63,24 @@ export const FORM_SERVICES: FormServiceMeta[] = [
   }
 ];
 
+// Safe Base64 converter for UTF-8 strings in both browser and node
+export function utf8ToBase64(str: string): string {
+  try {
+    return btoa(
+      encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => {
+        return String.fromCharCode(parseInt(p1, 16));
+      })
+    );
+  } catch {
+    try {
+      if (typeof Buffer !== 'undefined') {
+        return Buffer.from(str, 'utf-8').toString('base64');
+      }
+    } catch {}
+    return '';
+  }
+}
+
 export interface SampleIdPreset {
   id: string;
   name: string;
@@ -78,6 +96,7 @@ export interface SampleIdPreset {
     issuingState: string;
   };
   svgDataUrl: string;
+  base64Data: string;
 }
 
 // Generate high quality SVG sample ID cards for instant testing without needing real sensitive personal documents
@@ -112,12 +131,12 @@ export function generateSampleIdCardSvg(name: string, docType: string, number: s
     <rect x="24" y="24" width="592" height="4" fill="url(#goldHolo)" rx="2"/>
     
     <!-- State & Header Text -->
-    <text x="32" y="52" font-family="system-ui, sans-serif" font-size="22" font-weight="900" fill="#f8fafc" letter-spacing="2">STATE OF ${state.toUpperCase()} • REAL ID</text>
+    <text x="32" y="52" font-family="system-ui, sans-serif" font-size="22" font-weight="900" fill="#f8fafc" letter-spacing="2">STATE OF ${state.toUpperCase()} - REAL ID</text>
     <text x="590" y="52" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#38bdf8" text-anchor="end">${docType.toUpperCase()}</text>
     
     <!-- Star Emblem for Real ID -->
     <circle cx="590" cy="100" r="18" fill="#fbbf24" fill-opacity="0.2" stroke="#fbbf24" stroke-width="2"/>
-    <text x="590" y="106" font-family="system-ui, sans-serif" font-size="18" font-weight="bold" fill="#fbbf24" text-anchor="middle">★</text>
+    <polygon points="590,90 593,97 600,97 595,102 597,109 590,105 583,109 585,102 580,97 587,97" fill="#fbbf24" />
     
     <!-- Photo Box Placeholder with Holographic Silhouette -->
     <rect x="32" y="96" width="140" height="180" rx="12" fill="#1e293b" stroke="#0284c7" stroke-width="2"/>
@@ -150,6 +169,33 @@ export function generateSampleIdCardSvg(name: string, docType: string, number: s
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
+const eleanorSvg = generateSampleIdCardSvg(
+  'Eleanor Jane Vance',
+  'Driver License',
+  'WDL-849201948',
+  '05/14/1991',
+  '1420 Pine St Apt 4B, Seattle WA 98101',
+  'Washington'
+);
+
+const marcusSvg = generateSampleIdCardSvg(
+  'Marcus Alexander Chen',
+  'Real ID Card',
+  'CA-DL77492018',
+  '11/20/1986',
+  '350 Mission St Ste 1200, San Francisco CA',
+  'California'
+);
+
+const sophiaSvg = generateSampleIdCardSvg(
+  'Sophia Marie Rodriguez',
+  'Driver License',
+  'CO-98241094',
+  '11/03/1998',
+  '1204 Cedar Pkwy, Denver CO 80203',
+  'Colorado'
+);
+
 export const SAMPLE_ID_PRESETS: SampleIdPreset[] = [
   {
     id: 'sample_dl_eleanor',
@@ -165,14 +211,8 @@ export const SAMPLE_ID_PRESETS: SampleIdPreset[] = [
       expiry: '2030-05-14',
       issuingState: 'Washington'
     },
-    svgDataUrl: generateSampleIdCardSvg(
-      'Eleanor Jane Vance',
-      'Driver License',
-      'WDL-849201948',
-      '05/14/1991',
-      '1420 Pine St Apt 4B, Seattle WA 98101',
-      'Washington'
-    )
+    svgDataUrl: eleanorSvg,
+    base64Data: utf8ToBase64(decodeURIComponent(eleanorSvg.split(',')[1] || ''))
   },
   {
     id: 'sample_dl_marcus',
@@ -188,14 +228,8 @@ export const SAMPLE_ID_PRESETS: SampleIdPreset[] = [
       expiry: '2029-11-20',
       issuingState: 'California'
     },
-    svgDataUrl: generateSampleIdCardSvg(
-      'Marcus Alexander Chen',
-      'Real ID Card',
-      'CA-DL77492018',
-      '11/20/1986',
-      '350 Mission St Ste 1200, San Francisco CA',
-      'California'
-    )
+    svgDataUrl: marcusSvg,
+    base64Data: utf8ToBase64(decodeURIComponent(marcusSvg.split(',')[1] || ''))
   },
   {
     id: 'sample_dl_sophia',
@@ -211,13 +245,7 @@ export const SAMPLE_ID_PRESETS: SampleIdPreset[] = [
       expiry: '2028-11-03',
       issuingState: 'Colorado'
     },
-    svgDataUrl: generateSampleIdCardSvg(
-      'Sophia Marie Rodriguez',
-      'Driver License',
-      'CO-98241094',
-      '11/03/1998',
-      '1204 Cedar Pkwy, Denver CO 80203',
-      'Colorado'
-    )
+    svgDataUrl: sophiaSvg,
+    base64Data: utf8ToBase64(decodeURIComponent(sophiaSvg.split(',')[1] || ''))
   }
 ];

@@ -87,10 +87,9 @@ export const ApplicationsManagerModal: React.FC<ApplicationsManagerModalProps> =
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Are you sure you want to delete this record from Cloudflare D1?')) return;
     try {
       await fetch(`/api/applications/${id}`, { method: 'DELETE' });
-      setApplications(applications.filter((a) => a.id !== id));
+      setApplications((prev) => prev.filter((a) => a.id !== id));
       if (selectedApp?.id === id) {
         setSelectedApp(null);
       }
