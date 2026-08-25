@@ -1,0 +1,6 @@
+{
+  "name": "GovForm AI",
+  "description": "Multimodal conversational AI for government service application forms with Gemini Vision ID parsing, zero-bundle-bloat Astro SSR architecture, and Cloudflare D1 persistence.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

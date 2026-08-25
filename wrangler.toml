@@ -1,0 +1,28 @@
+name = "govform-ai"
+main = "./dist/_worker.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Cloudflare D1 Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "govform-ai-db"
+database_id = "d1-govform-production-001"
+migrations_dir = "migrations"
+
+# Cloudflare R2 Bucket for Encrypted Document Attachments
+[[r2_buckets]]
+binding = "DOCUMENTS_BUCKET"
+bucket_name = "govform-documents-encrypted"
+
+# Cloudflare KV for High-Speed Rate Limiting and Session Cache
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "kv-govform-ratelimit-001"
+
+[vars]
+ENVIRONMENT = "production"
+APP_NAME = "GovForm AI"
+
+# Secrets to be configured via `wrangler secret put GEMINI_API_KEY`:
+# - GEMINI_API_KEY
